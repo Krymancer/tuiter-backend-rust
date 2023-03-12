@@ -6,15 +6,15 @@ It is written in Rust and uses the [axum](https://crates.io/crates/axum) web app
 ## API Documentation
 
 - /tweets
-  - GET: list last 50 tweets
-  - POST: create a new tweets
+  - GET: list last 50 tuites
+  - POST: create a new tuite
 - /tweets/:id
-  - GET: find a tweet by its id
-  - DELETE: delete a tweet by its id
+  - GET: find a tuite by its id
+  - DELETE: delete a tuite by its id
 - /tweet/:id/like
-  - GET: list all likes attached to a tweet
-  - POST: add +1 like to a tweet
-  - DELETE: add -1 like to a tweet
+  - GET: list all likes attached to a tuite
+  - POST: add +1 like to a tuite
+  - DELETE: add -1 like to a tuite
 
 ## Running
 
