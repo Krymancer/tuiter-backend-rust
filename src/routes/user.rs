@@ -1,5 +1,9 @@
-use axum::{response::Json, http::StatusCode};
-use axum::{routing::post, Router};
+use axum::{
+    response::{Response, IntoResponse, Json},
+    routing::post,
+    http::StatusCode,
+    Router
+};
 use serde_json::{json, Value};
 
 use crate::models::user::{User, CreateUserRequest, AuthenticateUserRequest};
@@ -15,7 +19,11 @@ pub fn create_route() -> Router {
 async fn create_user(Json(body): Json<CreateUserRequest>) -> Result<Json<Value>, StatusCode> {
     let user = User::new(body.username, body.password);
 
-    insert_user(&user).await;
+    let result = insert_user(&user).await;
+
+    if result.is_err() {
+        return Err(StatusCode::BAD_REQUEST);
+    }
 
     let response = Json(json!({
         "user": user
@@ -24,16 +32,28 @@ async fn create_user(Json(body): Json<CreateUserRequest>) -> Result<Json<Value>,
     Ok(response)
 }
 
-async fn authenticate_user(Json(body) : Json<AuthenticateUserRequest>) -> Result<Json<Value>, StatusCode> {
+async fn authenticate_user(Json(body) : Json<AuthenticateUserRequest>) -> Response {
     
-    let user =  User::new(body.username, body.password);
-    
-    get_user_by_username(&user.get_username());
+    let user = User::new(body.username, body.password);
+
+    let result = get_user_by_username(&user.username);
+
+    if result.is_err() {
+        return (StatusCode::NOT_FOUND, Json(json!({"message": "User not found"}))).into_response();
+    }
+
+    if result.is_ok() {
+        let user_db = result.unwrap();
+
+        if user_db.password != user.password {
+            return (StatusCode::UNAUTHORIZED, Json(json!({"message": "Username or password wrong"}))).into_response();
+        }
+    }
 
     let response = Json(json!({
         "message": "User authenticated"
     }));
 
-    Ok(response)
+    (StatusCode::OK, response).into_response()
 }
 
