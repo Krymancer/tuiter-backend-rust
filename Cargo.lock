@@ -23,6 +23,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "anyhow"
+version = "1.0.70"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7de8ce5e0f9f8d88245311066a578d72b7af3e7088f32783804676302df237e4"
+
+[[package]]
 name = "async-trait"
 version = "0.1.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -129,6 +135,7 @@ dependencies = [
  "js-sys",
  "num-integer",
  "num-traits",
+ "serde",
  "time",
  "wasm-bindgen",
  "winapi",
@@ -859,6 +866,7 @@ checksum = "3528ecfd12c466c6f163363caf2d02a71161dd5e1cc6ae7b34207ea2d42d81ed"
 name = "twitter-backend-rust"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "axum",
  "chrono",
  "rusqlite",
@@ -888,6 +896,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1674845326ee10d37ca60470760d4288a6f80f304007d92e5c53bab78c9cfd79"
 dependencies = [
  "getrandom",
+ "serde",
 ]
 
 [[package]]

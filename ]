@@ -1,7 +1,7 @@
 use rusqlite::Connection;
 use anyhow::Error;
-use uuid::Uuid;
-use chrono::{DateTime, Utc, NaiveDateTime};
+use uuid::{Uuid, uuid};
+use chrono::{DateTime, Utc, serde::ts_seconds, NaiveDateTime};
 
 use crate::models::user::User;
 
@@ -98,22 +98,17 @@ pub fn get_user_by_username(username: &String) -> Result<User, Error> {
     }
 }
 
-pub async fn insert_user(user: &User) -> Result<(), Error> {
+pub async fn insert_user(user: &User) -> Result<User, Error> {
     let connection =  Connection::open("twitter.db")?;
 
     connection.execute(
         "INSERT INTO User (id, username, hash, icon, bio, created_at) VALUES(?1, ?2, ?3, ?4, ?5, ?6)",
         &[
-            &user.id.to_string(),
-            &user.username,
-            &user.hash,
-            &user.icon,
-            &user.bio,
-            &user.created_at.timestamp().to_string()
-        ]
+            &user.id, 
+            &user.username.to_string(), 
+            &user.hash
+        ],
     )?;
 
     Ok(())
 }
-
-
