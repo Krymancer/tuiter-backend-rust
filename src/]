@@ -12,8 +12,6 @@ use serde_json::{json, Value};
 use uuid::Uuid;
 use chrono::{Utc, TimeZone};
 
-use sqlx::error::DatabaseError;
-
 use crate::router::ApiContext;
 use crate::models::user::{CreateUserRequest, AuthenticateUserRequest};
 
@@ -36,16 +34,13 @@ async fn create_user(
         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"message": "Unable to hash password"}))).into_response()
     };
 
-    let uuid = Uuid::new_v4().to_string();
-
     let user_id = sqlx::query_scalar!(
         r#"INSERT INTO User
-        (id, username, hash, icon, bio, created_at)
+        (username, hash, icon, bio, created_at)
         values
-        ($1, $2, $3, $4, $5, $6)
+        ($1, $2, $3, $4, $5)
         RETURNING id
         "#,
-        uuid,
         request.username,
         hash_password,
         request.icon,
@@ -54,18 +49,13 @@ async fn create_user(
     )
     .fetch_one(&context.database)
     .await;
-    println!("{:?}", user_id);
 
-    
     let user_id = match user_id {
         Ok(id) => match id {
             Some(id) => id,
-            None => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"message": "Something went wrong"}))).into_response()
+            None => return (StatusCode::BAD_REQUEST, Json(json!({"message": "Something went wrong in the database side"}))).into_response()
         },
-        Err(error) => match error {
-            sqlx::Error::Database(e) if e.constraint() == Some("User.username") => return (StatusCode::BAD_REQUEST, Json(json!({"message": "Username Taken"}))).into_response(),
-            _ => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"message": "Unable to create user"}))).into_response()
-        } 
+        Err(e) => return (StatusCode::BAD_REQUEST, Json(json!({"message": "Something went wrong in the database side", "error": e}))).into_response()
     };
 
     (StatusCode::OK, Json(json!({

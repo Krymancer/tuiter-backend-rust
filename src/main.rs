@@ -1,16 +1,20 @@
-mod models;
-mod routes;
-mod router;
-mod repository;
-
-use router::get_router;
+use sqlx::sqlite::SqlitePool;
+use anyhow::{Error, Context};
+use clap::Parser;
+use twitter_backend_rust::config::Config;
+use twitter_backend_rust::router::serve;
 
 #[tokio::main]
-async fn main() {
-    let app = get_router();
+async fn main() -> Result<(), Error> {
+    dotenv::dotenv().ok();
 
-    axum::Server::bind(&"0.0.0.0:1234".parse().unwrap())
-        .serve(app.into_make_service())
+    let config = Config::parse();
+
+    let pool = SqlitePool::connect("./twitter.db")
         .await
-        .unwrap();
-}
+        .context("Failed to connect to database")?;
+
+    serve(config, pool).await?;
+    
+    Ok(())
+    }
