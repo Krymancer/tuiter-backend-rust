@@ -11,6 +11,7 @@ use chrono::{Utc, TimeZone};
 use crate::router::ApiContext;
 use crate::utils::{hash_password, verify_password};
 use crate::models::user::{CreateUserRequest, AuthenticateUserRequest};
+use crate::extractor::AuthUser;
 
 pub fn create_route() -> Router {
     Router::new()
@@ -119,7 +120,12 @@ async fn authenticate_user(
     let verify = verify_password(request.password, user.hash).await;
 
     let verify = match verify {
-        Ok(_) => return (StatusCode::OK, Json(json!({"message": "User authenticated"}))).into_response(),
+        Ok(_) => return (StatusCode::OK, Json(json!({
+            "message": "User authenticated", 
+            "token": AuthUser {
+                user_id: uuid,
+            }.to_jwt(&context)
+        }))).into_response(),
         Err(_) => return (StatusCode::UNAUTHORIZED, Json(json!({"message": "Invalid password"}))).into_response()
     };
 }
