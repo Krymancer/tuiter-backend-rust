@@ -59,10 +59,12 @@ async fn create_user(
         Ok(id) => id,
         Err(error) => match error {
             // Here we need to check by code 2067 (Unique Constraint Code) because the sqlite
-            // driver does not implement the constraint() method on the error object
-            // We also cant check if is a different constraint, but as in the user table we only
+            // driver does not populate the constraint() method on the error object
+            // We also can't check if is an specific constraint, but as in the user table we only
             // have a constraint in user, we should be fine
-            sqlx::Error::Database(e) if "2067" == e.code().as_ref().expect("Error must have a code").to_string() => return (StatusCode::BAD_REQUEST, Json(json!({"message": "Username Taken"}))).into_response(),
+            sqlx::Error::Database(e) 
+                if "2067" == e.code().as_ref().expect("Error must have a code").to_string() => 
+                    return (StatusCode::BAD_REQUEST, Json(json!({"message": "Username Taken"}))).into_response(),
             _ => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"message": "Unable to create user"}))).into_response()
         } 
     };
