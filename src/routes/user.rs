@@ -1,5 +1,6 @@
 use axum::{
     response::{Response, IntoResponse, Json},
+    extract::State,
     routing::post,
     http::StatusCode,
     Router,
@@ -13,14 +14,14 @@ use crate::utils::{hash_password, verify_password};
 use crate::models::user::{CreateUserRequest, AuthenticateUserRequest};
 use crate::extractor::AuthUser;
 
-pub fn create_route() -> Router {
+pub fn create_route() -> Router<ApiContext> {
     Router::new()
         .route("/user", post(create_user))
         .route("/auth", post(authenticate_user))
 }
 
 async fn create_user(
-    context: Extension<ApiContext>,
+    context: State<ApiContext>,
     Json(request): Json<CreateUserRequest>
 ) -> Response {
 
@@ -79,7 +80,7 @@ async fn create_user(
 }
 
 async fn authenticate_user(
-    context: Extension<ApiContext>,
+    context: State<ApiContext>,
     Json(request) : Json<AuthenticateUserRequest>
 ) -> Response {
 

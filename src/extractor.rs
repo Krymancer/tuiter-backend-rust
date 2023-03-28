@@ -1,5 +1,5 @@
 use crate::router::ApiContext;
-use axum::http::HeaderValue;
+use axum::{http::{HeaderValue, StatusCode, header::AUTHORIZATION}, Extension, extract::FromRequestParts};
 use time::OffsetDateTime;
 use jwt::{token::signed::SignWithKey, VerifyWithKey};
 use uuid::Uuid;
@@ -7,18 +7,25 @@ use hmac::{Hmac, Mac};
 use sha2::Sha384;
 use anyhow::Error;
 
+use axum::{
+    async_trait,
+    extract::{FromRequest, FromRef},
+    http::{self, Request, request::Parts},
+};
+
+
 const DEFAULT_SESSION_LENGTH : time::Duration = time::Duration::weeks(2);
 
 const SCHEME_PREFIX : &str = "Bearer ";
 
 pub struct AuthUser {
-    pub user_id: Uuid
+    pub user_id: Uuid,
 }
 
 pub struct MaybeUser(pub Option<AuthUser>);
 
 #[derive(serde::Deserialize, serde::Serialize)]
-struct AuthUserClaims {
+pub struct AuthUserClaims {
     user_id: Uuid,
     exp: i64,
 }
@@ -66,5 +73,27 @@ impl AuthUser {
         Ok(Self {
             user_id: claims.user_id,
         })
+    }
+}
+
+#[async_trait]
+impl<S> FromRequestParts<S> for AuthUser
+where S: Send + Sync,
+      ApiContext: FromRef<S>
+{
+    type Rejection = axum::http::StatusCode;
+    
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let context : ApiContext = ApiContext::from_ref(state);
+
+        let auth_header = parts
+            .headers
+            .get(AUTHORIZATION)
+            .ok_or(StatusCode::UNAUTHORIZED)?;
+
+        match Self::from_authorization(&context, auth_header) {
+            Ok(user) => Ok(user),
+            Err(_) => Err(StatusCode::UNAUTHORIZED)
+        }
     }
 }
