@@ -1,30 +1,27 @@
 use axum::{
     response::{Response, IntoResponse, Json},
+    extract::State,
     routing::post,
     http::StatusCode,
     Router,
     Extension
 };
-use anyhow::{Error, Context};
-use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHash};
-use serde_json::{json, Value};
+use serde_json::json;
 use uuid::Uuid;
 use chrono::{Utc, TimeZone};
-
-use sqlx::error::DatabaseError;
-
 use crate::router::ApiContext;
+use crate::utils::{hash_password, verify_password};
 use crate::models::user::{CreateUserRequest, AuthenticateUserRequest};
+use crate::extractor::AuthUser;
 
-pub fn create_route() -> Router {
+pub fn create_route() -> Router<ApiContext> {
     Router::new()
         .route("/user", post(create_user))
         .route("/auth", post(authenticate_user))
 }
 
 async fn create_user(
-    context: Extension<ApiContext>,
+    context: State<ApiContext>,
     Json(request): Json<CreateUserRequest>
 ) -> Response {
 
@@ -83,7 +80,7 @@ async fn create_user(
 }
 
 async fn authenticate_user(
-    context: Extension<ApiContext>,
+    context: State<ApiContext>,
     Json(request) : Json<AuthenticateUserRequest>
 ) -> Response {
 
@@ -124,36 +121,14 @@ async fn authenticate_user(
     let verify = verify_password(request.password, user.hash).await;
 
     let verify = match verify {
-        Ok(_) => return (StatusCode::OK, Json(json!({"message": "User authenticated"}))).into_response(),
+        Ok(_) => return (StatusCode::OK, Json(json!({
+            "message": "User authenticated", 
+            "token": AuthUser {
+                user_id: uuid,
+            }.to_jwt(&context)
+        }))).into_response(),
         Err(_) => return (StatusCode::UNAUTHORIZED, Json(json!({"message": "Invalid password"}))).into_response()
     };
 }
 
-async fn hash_password(password: String) -> Result<String, Error> {
-    // See https://en.wikipedia.org/wiki/Argon2
-    Ok(tokio::task::spawn_blocking(move || -> Result<String, Error> {
-        let salt = SaltString::generate(rand::thread_rng());
-        Ok(
-            PasswordHash::generate(Argon2::default(), password, salt.as_salt())
-                .map_err(|e| anyhow::anyhow!("failed to generate password hash: {}", e))?
-                .to_string(),
-        )
-    })
-    .await
-    .context("Error generating password hash")??)
-}
 
-async fn verify_password(password: String, password_hash: String) -> Result<(), Error> {
-    Ok(tokio::task::spawn_blocking(move || -> Result<(), Error> {
-        let hash = PasswordHash::new(&password_hash)
-            .map_err(|e| anyhow::anyhow!("invalid password hash: {}", e))?;
-
-        hash.verify_password(&[&Argon2::default()], password)
-            .map_err(|e| match e {
-                argon2::password_hash::Error::Password => Error::msg("Unathorized"),
-                _ => anyhow::anyhow!("failed to verify password hash: {}", e).into(),
-            })
-    })
-    .await
-    .context("panic in verifying password hash")??)
-}

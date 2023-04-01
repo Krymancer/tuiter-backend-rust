@@ -11,7 +11,7 @@ pub struct Tweet {
     pub author: User,
     pub content: String,
     pub created_at: DateTime<Utc>,
-    pub likes: u32,
+    pub likes: i32,
 }
 
 impl Tweet {
@@ -57,7 +57,6 @@ impl TryFrom<TweetQuery> for Tweet {
 #[derive (Debug, Serialize, Deserialize)]
 pub struct CreateTweetRequest {
     pub content: String,
-    pub user_id: String,
 }
 
 #[derive (Debug, Serialize, Deserialize)]
@@ -71,5 +70,5 @@ pub struct TweetQuery {
     pub author_bio: String,
     pub author_icon: String,
     pub author_created_at: String,
-    pub likes: u32,
+    pub likes: i32,
 }
