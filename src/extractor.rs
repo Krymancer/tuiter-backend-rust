@@ -1,5 +1,5 @@
 use crate::router::ApiContext;
-use axum::{http::{HeaderValue, StatusCode, header::AUTHORIZATION}, Extension, extract::FromRequestParts};
+use axum::{http::{HeaderValue, StatusCode, header::AUTHORIZATION}, extract::FromRequestParts};
 use time::OffsetDateTime;
 use jwt::{token::signed::SignWithKey, VerifyWithKey};
 use uuid::Uuid;
@@ -9,8 +9,8 @@ use anyhow::Error;
 
 use axum::{
     async_trait,
-    extract::{FromRequest, FromRef},
-    http::{self, Request, request::Parts},
+    extract::FromRef,
+    http::request::Parts
 };
 
 

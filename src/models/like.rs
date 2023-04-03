@@ -1,6 +1,5 @@
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
-use chrono::Utc;
 
 use crate::models::user::User;
 use crate::models::tweet::Tweet;

@@ -1,16 +1,16 @@
 use axum::{
     response::{Response, IntoResponse, Json},
     extract::{Path, State},
-    routing::{post, delete, get},
+    routing::{post, get},
     http::StatusCode,
-    Router, Extension,
+    Router
 };
 
-use serde_json::{json, Value};
+use serde_json::json;
 use uuid::Uuid;
 
 use crate::{
-    models::tweet::{CreateTweetRequest, Tweet, TweetQuery}, 
+    models::tweet::{CreateTweetRequest, TweetQuery}, 
     extractor::AuthUser, 
     router::ApiContext
 };
@@ -70,7 +70,7 @@ pub async fn get_tweets(context: State<ApiContext>) -> Response {
             User.bio AS "author_bio!", 
             User.icon AS "author_icon!",
             User.created_at AS "author_created_at!",
-            COUNT(Likes.tweet) AS "likes!"
+            COUNT(Likes.tweet) AS "likes!: i32"
             FROM Tweet 
             JOIN User ON Tweet.author = User.id
             LEFT JOIN Likes ON Tweet.id = Likes.tweet
@@ -153,7 +153,7 @@ pub async fn get_tweet(
             User.bio AS "author_bio!", 
             User.icon AS "author_icon!",
             User.created_at AS "author_created_at!",
-            0 AS "likes"
+            COUNT(Likes.tweet) AS "likes!: i32"
             FROM Tweet 
             JOIN User ON Tweet.author = User.id
             LEFT JOIN Likes ON Tweet.id = Likes.tweet

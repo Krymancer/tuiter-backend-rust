@@ -3,12 +3,10 @@ use axum::{
     extract::State,
     routing::post,
     http::StatusCode,
-    Router,
-    Extension
+    Router
 };
 use serde_json::json;
 use uuid::Uuid;
-use chrono::{Utc, TimeZone};
 use crate::router::ApiContext;
 use crate::utils::{hash_password, verify_password};
 use crate::models::user::{CreateUserRequest, AuthenticateUserRequest};
@@ -106,21 +104,10 @@ async fn authenticate_user(
         Ok(id) => id,
         Err(_) => return (StatusCode::NOT_FOUND, Json(json!({"message": "User not found"}))).into_response()
     };
-
-    let timestamp = match user.created_at.parse::<i64>(){
-        Ok(timestamp) => timestamp,
-        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response()
-    }
-    ;
-    let created_at = match Utc.timestamp_opt(timestamp, 0) {
-        chrono::LocalResult::None => return (StatusCode::INTERNAL_SERVER_ERROR, ()).into_response(),
-        chrono::LocalResult::Single(created_at) => created_at,
-        chrono::LocalResult::Ambiguous(created_at, _) => created_at
-    };
-
+ 
     let verify = verify_password(request.password, user.hash).await;
 
-    let verify = match verify {
+    let _verify = match verify {
         Ok(_) => return (StatusCode::OK, Json(json!({
             "message": "User authenticated", 
             "token": AuthUser {

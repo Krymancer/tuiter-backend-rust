@@ -1,9 +1,8 @@
 use std::sync::Arc;
 use anyhow::Context;
-use axum::{Router, Extension};
+use axum::Router;
 use tower_http::cors::{CorsLayer, Any};
 use tower_http::trace::TraceLayer;
-use tower::ServiceBuilder;
 use sqlx::sqlite::SqlitePool;
 
 use crate::config::Config;
