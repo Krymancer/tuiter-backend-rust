@@ -75,6 +75,7 @@ pub async fn get_tweets(context: State<ApiContext>) -> Response {
             JOIN User ON Tweet.author = User.id
             LEFT JOIN Likes ON Tweet.id = Likes.tweet
             GROUP BY Tweet.id
+            LIMIT 50
         "#,
     )
     .fetch_all(&context.database)

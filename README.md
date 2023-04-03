@@ -12,7 +12,6 @@ It is written in Rust and uses the [axum](https://crates.io/crates/axum) web app
   - GET: find a tuite by its id
   - DELETE: delete a tuite by its id
 - /tweet/:id/like
-  - GET: list all likes attached to a tuite
   - POST: add +1 like to a tuite
   - DELETE: add -1 like to a tuite
 
