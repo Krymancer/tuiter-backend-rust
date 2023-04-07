@@ -10,7 +10,7 @@ use serde_json::json;
 use uuid::Uuid;
 
 use crate::{
-    models::tweet::{CreateTweetRequest, TweetQuery}, 
+    models::tweet::{CreateTweetRequest, TweetQuery, Tweet, from_vec}, 
     extractor::AuthUser, 
     router::ApiContext
 };
@@ -85,6 +85,15 @@ pub async fn get_tweets(context: State<ApiContext>) -> Response {
         Ok(tweets) => tweets,
         Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({
             "message": "internal server error"
+        }))).into_response()
+    };
+
+    let tweets = from_vec(tweets);
+
+    let tweets = match tweets {
+        Ok(tweets) => tweets,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({
+            "message": "Error parsing tweets!"
         }))).into_response()
     };
 
@@ -167,9 +176,16 @@ pub async fn get_tweet(
     .await;
     
     let tweet = match tweet {
-        Ok(tweet) => tweet,
+        Ok(tweet) => Tweet::try_from(tweet),
         Err(_) => return (StatusCode::BAD_REQUEST, Json(json!({
             "message": "Cloud not find tweet with id provided"
+        }))).into_response()
+    };
+
+    let tweet = match tweet {
+        Ok(tweet) => tweet,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({
+            "message": "Cloud not parse tweet!"
         }))).into_response()
     };
 

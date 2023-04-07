@@ -52,7 +52,9 @@ impl TryFrom<TweetQuery> for Tweet {
     }
 }
 
-
+pub fn from_vec(values: Vec<TweetQuery>) -> Result<Vec<Tweet>, Error> {
+    values.into_iter().map(Tweet::try_from).collect()
+}
 
 #[derive (Debug, Serialize, Deserialize)]
 pub struct CreateTweetRequest {

@@ -11,6 +11,7 @@ use crate::utils::deserialize_date_time;
 pub struct User {
     pub id: Uuid,
     pub username: String,
+    #[serde(skip_serializing)]
     pub hash: String,
     pub icon: String,
     pub bio: String,
