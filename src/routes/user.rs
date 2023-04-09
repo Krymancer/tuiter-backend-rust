@@ -9,7 +9,7 @@ use serde_json::json;
 use uuid::Uuid;
 use crate::router::ApiContext;
 use crate::utils::{hash_password, verify_password};
-use crate::models::user::{CreateUserRequest, AuthenticateUserRequest};
+use crate::models::user::{CreateUserRequest, AuthenticateUserRequest, User, UserQuery};
 use crate::extractor::AuthUser;
 
 pub fn create_route() -> Router<ApiContext> {
@@ -81,10 +81,15 @@ async fn authenticate_user(
     context: State<ApiContext>,
     Json(request) : Json<AuthenticateUserRequest>
 ) -> Response {
-
-    let user = sqlx::query!(
+    let user = sqlx::query_as!(
+        UserQuery,
         r#"SELECT
-        id, username, hash, icon, bio, created_at
+        id as "id!",
+        username as "username!", 
+        hash as "hash!",
+        icon as "icon!",
+        bio as "bio!",
+        created_at  as "created_at!"
         FROM User WHERE username = $1 LIMIT 1
         "#,
         request.username
@@ -93,25 +98,30 @@ async fn authenticate_user(
         .await;
 
     let user = match user {
-        Err(_) => return (StatusCode::NOT_FOUND, Json(json!({"message": "User not found"}))).into_response(),
-        Ok(user) => match user {
-            Some(user) => user,
-            None => return (StatusCode::NOT_FOUND, Json(json!({"message": "User not found"}))).into_response()
-        }
+        Ok(user) => user,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"message": "Something went wrong"}))).into_response(),
     };
 
-    let uuid = match Uuid::parse_str(&user.id.as_str()) {
-        Ok(id) => id,
-        Err(_) => return (StatusCode::NOT_FOUND, Json(json!({"message": "User not found"}))).into_response()
+    let user = match user {
+        Some(user) => user,
+        None => return (StatusCode::NOT_FOUND, Json(json!({"message": "User not found"}))).into_response()
     };
- 
-    let verify = verify_password(request.password, user.hash).await;
+
+    let user = User::try_from(user);
+
+    let user = match user {
+        Ok(user) => user,
+        Err(_) => return (StatusCode::INTERNAL_SERVER_ERROR, Json(json!({"message": "Something went wrong"}))).into_response()
+    };
+
+    let verify = verify_password(request.password, user.hash.clone()).await;
 
     let _verify = match verify {
         Ok(_) => return (StatusCode::OK, Json(json!({
             "message": "User authenticated", 
+            "user": user,
             "token": AuthUser {
-                user_id: uuid,
+                user_id: user.id,
             }.to_jwt(&context)
         }))).into_response(),
         Err(_) => return (StatusCode::UNAUTHORIZED, Json(json!({"message": "Invalid password"}))).into_response()

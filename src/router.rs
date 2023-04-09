@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use anyhow::Context;
 use axum::Router;
-use tower_http::cors::{CorsLayer, Any};
+use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use sqlx::sqlite::SqlitePool;
 
@@ -35,8 +35,8 @@ pub async fn serve(config: Config, database: SqlitePool) -> anyhow::Result<()> {
     };
 
     let app = get_router(api_state)
-        .layer(TraceLayer::new_for_http())
-        .layer(CorsLayer::new().allow_origin(Any).allow_methods(Any));
+        .layer(CorsLayer::permissive())
+        .layer(TraceLayer::new_for_http());
 
     axum::Server::bind(&"0.0.0.0:1234".parse()?)
         .serve(app.into_make_service())
