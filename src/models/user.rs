@@ -58,23 +58,14 @@ pub struct AuthenticateUserRequest {
 
 impl TryFrom<UserQuery> for User {
     type Error = Error; 
-    fn try_from(user_query: UserQuery) -> Result<Self, Error> {
-        let _created_at = deserialize_date_time(&user_query.created_at)?;
-        let _uuid = Uuid::parse_str(&user_query.id)?;
-        if let (Ok(_created_at), Ok(_uuid)) = (
-            deserialize_date_time(&user_query.created_at),
-            Uuid::parse_str(&user_query.id)) 
-        {
-            Ok(User {
-                id: _uuid,
-                username: user_query.username,
-                hash: user_query.hash,
-                icon: user_query.icon,
-                bio: user_query.bio,
-                created_at: _created_at,
-            })
-        } else {
-            Err(Error::msg("Error converting date or uuid"))
-        }
+    fn try_from(value: UserQuery) -> Result<Self, Error> {
+        Ok(User {
+            id: Uuid::parse_str(&value.id)?,
+            username: value.username,
+            hash: value.hash,
+            icon: value.icon,
+            bio: value.bio,
+            created_at: deserialize_date_time(&value.created_at)?,
+        })
     }
 }

@@ -75,6 +75,7 @@ pub async fn get_tweets(context: State<ApiContext>) -> Response {
             JOIN User ON Tweet.author = User.id
             LEFT JOIN Likes ON Tweet.id = Likes.tweet
             GROUP BY Tweet.id
+            ORDER BY Tweet.created_at DESC
             LIMIT 50
         "#,
     )
@@ -98,7 +99,6 @@ pub async fn get_tweets(context: State<ApiContext>) -> Response {
     };
 
     (StatusCode::OK, Json(json!({
-        "message": "ok",
         "tweets": tweets
     }))).into_response()
 }

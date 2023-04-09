@@ -2,6 +2,7 @@ use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 use anyhow::Error;
+use chrono::serde::ts_seconds::serialize as to_ts;
 
 use crate::{models::user::{User, UserQuery}, utils::deserialize_date_time};
 
@@ -10,6 +11,7 @@ pub struct Tweet {
     pub id: Uuid,
     pub author: User,
     pub content: String,
+    #[serde(serialize_with = "to_ts")]
     pub created_at: DateTime<Utc>,
     pub likes: i32,
 }
@@ -38,7 +40,6 @@ impl TryFrom<TweetQuery> for Tweet {
             icon: value.author_icon,
             created_at: value.author_created_at,
         };
-
 
         let author = User::try_from(author_query)?;
 
